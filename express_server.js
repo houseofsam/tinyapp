@@ -9,11 +9,13 @@ const urlDatabase = {
     "9sm5xK": "http://www.google.com"
 };
 
+// D.O.
 app.get('/', (req, res) => {
   // res.send('Hello!');
   res.render('pages/index');
 });
 
+// D.O.
 app.get('/about', (req, res) => {
   const mascots = [
     { name: 'Sammy', organization: "DigitalOcean", birth_year: 2012},
@@ -46,6 +48,12 @@ app.get("/set", (req, res) => {
   res.send(`a = ${a}`);
  });
 
+ app.get('/urls', (req, res) => {
+   const templateVars = { urls: urlDatabase } //interesting...
+   res.render('pages/urls_index', templateVars);
+ })
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
