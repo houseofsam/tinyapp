@@ -19,7 +19,8 @@ function generateRandomString() {
 // D.O.
 app.get('/', (req, res) => {
   // res.send('Hello!');
-  res.render('pages/index');
+  // res.render('pages/index');
+  res.redirect('/urls');
 });
 
 // // add routes
@@ -50,6 +51,10 @@ app.get('/u/:shortURL', (req, res) => {
   // Check if the longURL in the database starts with http://
   if (regex.test(longURLRedirect)) {
     res.redirect(`${longURLRedirect}`);
+  } else if (!urlDatabase[req.params.shortURL]){
+    console.log('Short url link not found! Redirecting to home page!');
+    // res.send('page not found');
+    res.redirect('/');
   } else {
     res.redirect(`http://${longURLRedirect}`);
   }
