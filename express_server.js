@@ -43,6 +43,12 @@ app.post('/urls', (req,res) => {
   res.redirect(`/urls/${shortURL}`);
 })
 
+app.get('/u/:shortURL', (req, res) => {
+  const longURLRedirect = urlDatabase[req.params.shortURL];
+  console.log(longURLRedirect);
+  res.redirect(`http://${longURLRedirect}`);
+});
+
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase }
   res.render('pages/urls_show', templateVars);
