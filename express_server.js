@@ -12,6 +12,10 @@ const urlDatabase = {
     "9sm5xK": "http://www.google.com"
 };
 
+function generateRandomString() {
+  return Math.random().toString(36).slice(2, 8);
+}
+
 // D.O.
 app.get('/', (req, res) => {
   // res.send('Hello!');
@@ -30,6 +34,12 @@ app.get('/urls', (req, res) => {
 
 app.get('/urls/new', (req, res) => {
   res.render('pages/urls_new');
+})
+
+app.post('/urls', (req,res) => {
+  console.log(generateRandomString());
+  console.log(req.body);
+  res.send('ok');
 })
 
 app.get('/urls/:shortURL', (req, res) => {
