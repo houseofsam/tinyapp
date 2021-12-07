@@ -47,7 +47,7 @@ app.post('/urls', (req,res) => {
 app.get('/u/:shortURL', (req, res) => {
   const regex = new RegExp('^http://');
   const longURLRedirect = urlDatabase[req.params.shortURL];
-  console.log(longURLRedirect);
+
   // Check if the longURL in the database starts with http://
   if (regex.test(longURLRedirect)) {
     res.redirect(`${longURLRedirect}`);
@@ -65,7 +65,13 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('pages/urls_show', templateVars);
 });
 
-app.post('/urls/:shorURL/delete', (req, res) => {
+app.post('/urls/:shortURL', (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  console.log(urlDatabase);
+  res.redirect('/');
+})
+
+app.post('/urls/:shortURL/delete', (req, res) => {
   const property = req.params.shorURL;
   delete urlDatabase[property];
   console.log(urlDatabase);
