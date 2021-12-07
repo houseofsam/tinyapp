@@ -1,8 +1,11 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080; //default
 
 app.set('view engine', 'ejs');
+
+app.use(bodyParser.urlencoded({extended: true}));
 
 const urlDatabase = {
     "b2xVn2": "http://www.lighthouselabs.ca",
@@ -15,48 +18,24 @@ app.get('/', (req, res) => {
   res.render('pages/index');
 });
 
-// D.O.
-app.get('/about', (req, res) => {
-  const mascots = [
-    { name: 'Sammy', organization: "DigitalOcean", birth_year: 2012},
-    { name: 'Tux', organization: "Linux", birth_year: 1996},
-    { name: 'Moby Dock', organization: "Docker", birth_year: 2013}
-  ];
-  const tagline = "No programming concept is complete without a cute animal mascot.";
+// // add routes
+// app.get('/urls.json', (req, res) => {
+//   res.json(urlDatabase);
+// });
 
-  res.render('pages/about', {
-    mascots: mascots,
-    tagline: tagline
-  });
+app.get('/urls', (req, res) => {
+  const templateVars = { urls: urlDatabase } //interesting...
+  res.render('pages/urls_index', templateVars);
+});
+
+app.get('/urls/new', (req, res) => {
+  res.render('pages/urls_new');
 })
 
-// add routes
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get('/hello', (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>\n');
-});
-
-app.get("/set", (req, res) => {
-  const a = 1;
-  res.send(`a = ${a}`);
- });
- 
- app.get("/fetch", (req, res) => {
-  res.send(`a = ${a}`);
- });
-
- app.get('/urls', (req, res) => {
-   const templateVars = { urls: urlDatabase } //interesting...
-   res.render('pages/urls_index', templateVars);
- });
-
- app.get('/urls/:shortURL', (req, res) => {
-   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase }
-   res.render('pages/urls_show', templateVars);
- })
+app.get('/urls/:shortURL', (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase }
+  res.render('pages/urls_show', templateVars);
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
