@@ -11,13 +11,13 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
 const urlDatabase = {
-    "b2xVn2": "http://www.lighthouselabs.ca",
-    "9sm5xK": "http://www.google.com"
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
 };
 
-function generateRandomString() {
+const generateRandomString = function() {
   return Math.random().toString(36).slice(2, 8);
-}
+};
 
 // D.O.
 app.get('/', (req, res) => {
@@ -39,14 +39,14 @@ app.get('/urls', (req, res) => {
 app.get('/urls/new', (req, res) => {
   const templateVars = { username: req.cookies["username"] };
   res.render('pages/urls_new', templateVars);
-})
+});
 
 app.post('/urls', (req,res) => {
-  const shortURL = generateRandomString()
+  const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
-})
+});
 
 app.get('/u/:shortURL', (req, res) => {
   const regex = new RegExp('^http://');
@@ -55,7 +55,7 @@ app.get('/u/:shortURL', (req, res) => {
   // Check if the longURL in the database starts with http://
   if (regex.test(longURLRedirect)) {
     res.redirect(`${longURLRedirect}`);
-  } else if (!urlDatabase[req.params.shortURL]){
+  } else if (!urlDatabase[req.params.shortURL]) {
     console.log('Short url link not found! Redirecting to home page!');
     // res.send('page not found');
     res.redirect('/');
@@ -65,7 +65,7 @@ app.get('/u/:shortURL', (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase }
+  const templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase };
   res.render('pages/urls_show', templateVars);
 });
 
@@ -73,7 +73,7 @@ app.post('/urls/:shortURL', (req, res) => {
   urlDatabase[req.params.shortURL] = req.body.longURL;
   console.log(urlDatabase);
   res.redirect('/');
-})
+});
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const property = req.params.shorURL;
@@ -90,6 +90,16 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) =>  {
   res.clearCookie('username');
   res.redirect('/urls');
+});
+
+app.get('/register', (req, res) => {
+  const templateVars = { username: req.cookies['username'] };
+  res.render('pages/registration', templateVars);
+});
+
+app.post('/register', (req, res) => {
+  const templateVars = { username: req.cookies['username'] };
+  res.render('pages/registration', templateVars)
 })
 
 app.listen(PORT, () => {
