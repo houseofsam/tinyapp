@@ -98,8 +98,17 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect('/urls');
+  let user = findUserByEmail(req.body.email);
+
+  if (!user) {
+    res.status(403).send('User with that e-mail address cannot be found!');
+  } else if (user && req.body.password !== user.password) {
+    res.status(403).send('Password is incorrect.');
+  } else {
+    res.cookie('user_id', user.id);
+    res.redirect('/urls');
+  }
+
 });
 
 app.post('/logout', (req, res) =>  {
@@ -126,7 +135,7 @@ app.post('/register', (req, res) => {
   const userID = generateRandomString();
   users[userID] = { id: userID, email: req.body.email, password: req.body.password };
   res.cookie('user_id', userID);
-console.log(users);
+
   res.redirect('/urls')
 });
 
