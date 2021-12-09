@@ -24,14 +24,22 @@ const users = {
 }
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 
+// For unique user & short link IDs
 const generateRandomString = function() {
   return Math.random().toString(36).slice(2, 8);
 };
 
+//to find a match during registration & login
 const findUserByEmail = function(email) {
   for (let userID in users) {
     const user = users[userID]
@@ -41,60 +49,158 @@ const findUserByEmail = function(email) {
   }
 };
 
+const urlsForUser = function(id) {
+  let userURLs = {};
+
+  for (let url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      userURLs[url] = {};
+      userURLs[url] = { longURL: urlDatabase[url].longURL, userID: urlDatabase[url].userID }
+    }
+  }
+
+  return userURLs;
+};
+
+
+
+// const findUserByIdCookie = function(id) {
+//   for (let userID in users) {
+//     const user = users[userID];
+//     if (user.id === id) {
+//       return true;
+//     }
+//   }
+// }
+
 // D.O.
 app.get('/', (req, res) => {
   res.redirect('/urls');
 });
 
+// home page with list of links
 app.get('/urls', (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase }; //interesting...
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { user: user, urls: urlsForUser(userID) }; //interesting...
+
+  if(!user) {
+    res.redirect('/login');
+  }
+
   res.render('pages/urls_index', templateVars);
 });
 
 app.get('/urls/new', (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { user: user };
+
+  if(!user) {
+    res.redirect('/login');
+  }
+  
   res.render('pages/urls_new', templateVars);
 });
 
+// handler for when a new short url is generated
 app.post('/urls', (req,res) => {
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+
+  if(!user) {
+    res.redirect('/login');
+  }
+
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {};
+  urlDatabase[shortURL].longURL = req.body.longURL;
+  urlDatabase[shortURL].userID = userID;
   console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
 
+// redirect to long url
 app.get('/u/:shortURL', (req, res) => {
-  const regex = new RegExp('^http://');
-  const longURLRedirect = urlDatabase[req.params.shortURL];
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { user: user };
+
+  if (!urlDatabase[req.params.shortURL]) {
+    console.log('Short url link not found!');
+    res.render('pages/urls_error_linkDNE', templateVars);
+  }
+
+  const regex = new RegExp('^http');
+  const longURLRedirect = urlDatabase[req.params.shortURL].longURL;
 
   // Check if the longURL in the database starts with http://
   if (regex.test(longURLRedirect)) {
     res.redirect(`${longURLRedirect}`);
-  } else if (!urlDatabase[req.params.shortURL]) {
-    console.log('Short url link not found! Redirecting to home page!');
-    // res.send('page not found');
-    res.redirect('/');
   } else {
     res.redirect(`http://${longURLRedirect}`);
   }
 });
 
+// view the details of a shortened link
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase };
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const URLsBelongingToUser = urlsForUser(userID);
+  
+  const templateVars = {
+    user: user,
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase
+  };
+
+  if (!URLsBelongingToUser[req.params.shortURL]) {
+    res.render('pages/urls_error_linkOwner', templateVars);
+  }
+
+  console.log(urlsForUser(userID));
+
+  
   res.render('pages/urls_show', templateVars);
 });
 
+// handler for when a long url is edited for a particular short url 
 app.post('/urls/:shortURL', (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL;
-  console.log(urlDatabase);
-  res.redirect('/');
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const URLsBelongingToUser = urlsForUser(userID);
+
+  const templateVars = {
+    user: user,
+  };
+
+  if(!user || !URLsBelongingToUser) {
+    res.render('pages/urls_error_linkOwner', templateVars);
+  } else {
+    urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+    console.log(urlDatabase);
+    res.redirect('/');
+  }
 });
 
+// handler for deleting shortened url entry
 app.post('/urls/:shortURL/delete', (req, res) => {
-  const property = req.params.shorURL;
-  delete urlDatabase[property];
-  console.log(urlDatabase);
-  res.redirect('/');
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const URLsBelongingToUser = urlsForUser(userID);
+
+  const templateVars = {
+    user: user,
+  };
+
+  if(!user || !URLsBelongingToUser) {
+    res.render('pages/urls_error_linkOwner', templateVars);
+  } else {
+    const property = req.params.shortURL;
+    delete urlDatabase[property];
+    console.log(urlDatabase);
+    res.redirect('/');
+  }
 });
 
 app.post('/login', (req, res) => {
@@ -117,7 +223,14 @@ app.post('/logout', (req, res) =>  {
 });
 
 app.get('/register', (req, res) => {
-  const templateVars = { user: req.cookies['user_id'] };
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { user: user };
+
+  if(user) {
+    res.redirect('/urls');
+  }
+
   res.render('pages/registration', templateVars);
 });
 
@@ -140,9 +253,18 @@ app.post('/register', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const templateVars = { user: req.cookies['user_id'] };
+  // const templateVars = { user: req.cookies['user_id'] }; replaced here & in /register bc of header glitch
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { user: user };
+
+
+  if(user) {
+    res.redirect('/urls');
+  }
+  
   res.render('pages/login', templateVars);
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
