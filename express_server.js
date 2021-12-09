@@ -196,14 +196,13 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 app.post('/login', (req, res) => {
   let user = findUserByEmail(req.body.email);
-  let hashedUserPassDB = bcrypt.hashSync(user.password, 10)
   const formPassword = req.body.password;
   const hashedPassword = bcrypt.hashSync(formPassword, 10);
 
 
   if (!user) {
     return res.status(403).send('User with that e-mail address cannot be found!');
-  } else if (user && hashedPassword !== hashedUserPassDB) {
+  } else if (user && bcrypt.compareSync(user.password, hashedPassword)) {
     return res.status(403).send('Password is incorrect.');
   } else {
     res.cookie('user_id', user.id);
