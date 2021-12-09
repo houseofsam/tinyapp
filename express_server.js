@@ -1,9 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+
+
 const app = express();
 const PORT = 8080; //default
-
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -64,7 +66,7 @@ const urlsForUser = function(id) {
 
 // D.O.
 app.get('/', (req, res) => {
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 // home page with list of links
@@ -74,10 +76,10 @@ app.get('/urls', (req, res) => {
   const templateVars = { user: user, urls: urlsForUser(userID) }; 
 
   if(!user) {
-    res.redirect('/login');
+    return res.redirect('/login');
   }
 
-  res.render('pages/urls_index', templateVars);
+  return res.render('pages/urls_index', templateVars);
 });
 
 app.get('/urls/new', (req, res) => {
@@ -86,10 +88,10 @@ app.get('/urls/new', (req, res) => {
   const templateVars = { user: user };
 
   if(!user) {
-    res.redirect('/login');
+    return res.redirect('/login');
   }
   
-  res.render('pages/urls_new', templateVars);
+  return res.render('pages/urls_new', templateVars);
 });
 
 // handler for when a new short url is generated
@@ -98,7 +100,7 @@ app.post('/urls', (req,res) => {
   const user = users[userID];
 
   if(!user) {
-    res.redirect('/login');
+    return res.redirect('/login');
   }
 
   const shortURL = generateRandomString();
@@ -106,7 +108,7 @@ app.post('/urls', (req,res) => {
   urlDatabase[shortURL].longURL = req.body.longURL;
   urlDatabase[shortURL].userID = userID;
   console.log(urlDatabase);
-  res.redirect(`/urls/${shortURL}`);
+  return res.redirect(`/urls/${shortURL}`);
 });
 
 // redirect to long url
@@ -117,7 +119,7 @@ app.get('/u/:shortURL', (req, res) => {
 
   if (!urlDatabase[req.params.shortURL]) {
     console.log('Short url link not found!');
-    res.render('pages/urls_error_linkDNE', templateVars);
+    return res.render('pages/urls_error_linkDNE', templateVars);
   }
 
   const regex = new RegExp('^http');
@@ -125,9 +127,9 @@ app.get('/u/:shortURL', (req, res) => {
 
   // Check if the longURL in the database starts with http://
   if (regex.test(longURLRedirect)) {
-    res.redirect(`${longURLRedirect}`);
+    return res.redirect(`${longURLRedirect}`);
   } else {
-    res.redirect(`http://${longURLRedirect}`);
+    return res.redirect(`http://${longURLRedirect}`);
   }
 });
 
@@ -144,13 +146,13 @@ app.get('/urls/:shortURL', (req, res) => {
   };
 
   if (!URLsBelongingToUser[req.params.shortURL]) {
-    res.render('pages/urls_error_linkOwner', templateVars);
+    return res.render('pages/urls_error_linkOwner', templateVars);
   }
 
   console.log(urlsForUser(userID));
 
   
-  res.render('pages/urls_show', templateVars);
+  return res.render('pages/urls_show', templateVars);
 });
 
 // handler for when a long url is edited for a particular short url 
@@ -164,11 +166,11 @@ app.post('/urls/:shortURL', (req, res) => {
   };
 
   if(!user || !URLsBelongingToUser) {
-    res.render('pages/urls_error_linkOwner', templateVars);
+    return res.render('pages/urls_error_linkOwner', templateVars);
   } else {
     urlDatabase[req.params.shortURL].longURL = req.body.longURL;
     console.log(urlDatabase);
-    res.redirect('/');
+    return res.redirect('/');
   }
 });
 
@@ -183,32 +185,36 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   };
 
   if(!user || !URLsBelongingToUser) {
-    res.render('pages/urls_error_linkOwner', templateVars);
+    return res.render('pages/urls_error_linkOwner', templateVars);
   } else {
     const property = req.params.shortURL;
     delete urlDatabase[property];
     console.log(urlDatabase);
-    res.redirect('/');
+    return res.redirect('/');
   }
 });
 
 app.post('/login', (req, res) => {
   let user = findUserByEmail(req.body.email);
+  let hashedUserPassDB = bcrypt.hashSync(user.password, 10)
+  const formPassword = req.body.password;
+  const hashedPassword = bcrypt.hashSync(formPassword, 10);
+
 
   if (!user) {
-    res.status(403).send('User with that e-mail address cannot be found!');
-  } else if (user && req.body.password !== user.password) {
-    res.status(403).send('Password is incorrect.');
+    return res.status(403).send('User with that e-mail address cannot be found!');
+  } else if (user && hashedPassword !== hashedUserPassDB) {
+    return res.status(403).send('Password is incorrect.');
   } else {
     res.cookie('user_id', user.id);
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
 
 });
 
 app.post('/logout', (req, res) =>  {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 app.get('/register', (req, res) => {
@@ -217,28 +223,32 @@ app.get('/register', (req, res) => {
   const templateVars = { user: user };
 
   if(user) {
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
 
-  res.render('pages/registration', templateVars);
+  return res.render('pages/registration', templateVars);
 });
 
 app.post('/register', (req, res) => {
   if (!req.body.email || !req.body.password) {
-    res.status(400).send('Email/password cannot be blank!')
+    return res.status(400).send('Email/password cannot be blank!')
   }
   
   const user = findUserByEmail(req.body.email);
   
   if (user) {
-    res.status(400).send('A with that email address already exitsts!')
+    return res.status(400).send('A with that email address already exitsts!')
   }
 
   const userID = generateRandomString();
-  users[userID] = { id: userID, email: req.body.email, password: req.body.password };
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  users[userID] = { id: userID, email: req.body.email, password: hashedPassword };
+  console.log(users);
   res.cookie('user_id', userID);
 
-  res.redirect('/urls')
+  return res.redirect('/urls')
 });
 
 app.get('/login', (req, res) => {
@@ -249,10 +259,10 @@ app.get('/login', (req, res) => {
 
 
   if(user) {
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
   
-  res.render('pages/login', templateVars);
+  return res.render('pages/login', templateVars);
 });
 
 app.listen(PORT, () => {
