@@ -62,17 +62,6 @@ const urlsForUser = function(id) {
   return userURLs;
 };
 
-
-
-// const findUserByIdCookie = function(id) {
-//   for (let userID in users) {
-//     const user = users[userID];
-//     if (user.id === id) {
-//       return true;
-//     }
-//   }
-// }
-
 // D.O.
 app.get('/', (req, res) => {
   res.redirect('/urls');
@@ -82,7 +71,7 @@ app.get('/', (req, res) => {
 app.get('/urls', (req, res) => {
   const userID = req.cookies['user_id'];
   const user = users[userID];
-  const templateVars = { user: user, urls: urlsForUser(userID) }; //interesting...
+  const templateVars = { user: user, urls: urlsForUser(userID) }; 
 
   if(!user) {
     res.redirect('/login');
