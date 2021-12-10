@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
+const findUserByEmail = require('./helpers');
 
 
 
@@ -46,16 +47,6 @@ const urlDatabase = {
 // For unique user & short link IDs
 const generateRandomString = function() {
   return Math.random().toString(36).slice(2, 8);
-};
-
-//to find a match during registration & login
-const findUserByEmail = function(email) {
-  for (let userID in users) {
-    const user = users[userID]
-    if (user.email === email) {
-      return user;
-    }
-  }
 };
 
 const urlsForUser = function(id) {
@@ -202,7 +193,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  let user = findUserByEmail(req.body.email);
+  let user = findUserByEmail(req.body.email, users);
   const formPassword = req.body.password;
   const hashedPassword = bcrypt.hashSync(formPassword, 10);
 
@@ -241,7 +232,7 @@ app.post('/register', (req, res) => {
     return res.status(400).send('Email/password cannot be blank!')
   }
   
-  const user = findUserByEmail(req.body.email);
+  const user = findUserByEmail(req.body.email, users);
   
   if (user) {
     return res.status(400).send('A with that email address already exitsts!')
