@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
-const findUserByEmail = require('./helpers');
+const { findUserByEmail } = require('./helpers');
 
 
 
