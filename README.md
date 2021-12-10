@@ -4,11 +4,11 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["Screenshot of register page"](#)
-!["Screenshot of login page"](#)
-!["Screenshot of page to create new shortlink"](#)
-!["Screenshot of page to view existing shortlink"](#)
-!["Screenshot of page to view all user shortlinks"](#)
+!["Screenshot of register page"](https://github.com/houseofsam/tinyapp/blob/main/docs/register-page.png)
+!["Screenshot of login page"](https://github.com/houseofsam/tinyapp/blob/main/docs/login-page.png)
+!["Screenshot of page to create new shortlink"](https://github.com/houseofsam/tinyapp/blob/main/docs/create-new-shortlink-page.png)
+!["Screenshot of page to view existing shortlink"](https://github.com/houseofsam/tinyapp/blob/main/docs/view-existing-shortlink.png)
+!["Screenshot of page to view all user shortlinks"](https://github.com/houseofsam/tinyapp/blob/main/docs/view-all-user-shortlinks.png)
 
 ## Dependencies
 
