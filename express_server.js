@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session');
+
 
 
 const app = express();
@@ -11,6 +13,11 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(cookieParser());
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['random test']
+}));
 
 const users = {
   "userRandomID": {
@@ -71,7 +78,7 @@ app.get('/', (req, res) => {
 
 // home page with list of links
 app.get('/urls', (req, res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user: user, urls: urlsForUser(userID) }; 
 
@@ -83,7 +90,7 @@ app.get('/urls', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user: user };
 
@@ -96,7 +103,7 @@ app.get('/urls/new', (req, res) => {
 
 // handler for when a new short url is generated
 app.post('/urls', (req,res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
 
   if(!user) {
@@ -113,7 +120,7 @@ app.post('/urls', (req,res) => {
 
 // redirect to long url
 app.get('/u/:shortURL', (req, res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user: user };
 
@@ -135,7 +142,7 @@ app.get('/u/:shortURL', (req, res) => {
 
 // view the details of a shortened link
 app.get('/urls/:shortURL', (req, res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const URLsBelongingToUser = urlsForUser(userID);
   
@@ -157,7 +164,7 @@ app.get('/urls/:shortURL', (req, res) => {
 
 // handler for when a long url is edited for a particular short url 
 app.post('/urls/:shortURL', (req, res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const URLsBelongingToUser = urlsForUser(userID);
 
@@ -176,7 +183,7 @@ app.post('/urls/:shortURL', (req, res) => {
 
 // handler for deleting shortened url entry
 app.post('/urls/:shortURL/delete', (req, res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const URLsBelongingToUser = urlsForUser(userID);
 
@@ -205,19 +212,20 @@ app.post('/login', (req, res) => {
   } else if (user && bcrypt.compareSync(user.password, hashedPassword)) {
     return res.status(403).send('Password is incorrect.');
   } else {
-    res.cookie('user_id', user.id);
+    req.session.user_id = user.id;
     return res.redirect('/urls');
   }
 
 });
 
 app.post('/logout', (req, res) =>  {
-  res.clearCookie('user_id');
+  // res.clearCookie('user_id');
+  delete req.session.user_id;
   return res.redirect('/urls');
 });
 
 app.get('/register', (req, res) => {
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user: user };
 
@@ -245,14 +253,14 @@ app.post('/register', (req, res) => {
 
   users[userID] = { id: userID, email: req.body.email, password: hashedPassword };
   console.log(users);
-  res.cookie('user_id', userID);
 
+  req.session.user_id = userID
   return res.redirect('/urls')
 });
 
 app.get('/login', (req, res) => {
   // const templateVars = { user: req.cookies['user_id'] }; replaced here & in /register bc of header glitch
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = { user: user };
 
